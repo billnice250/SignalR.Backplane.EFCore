@@ -1,0 +1,19 @@
+# Normalize line endings
+* text=auto
+
+# Treat C# files as text
+*.cs text diff=csharp
+
+# Treat solution and project files as text
+*.sln text eol=crlf
+*.csproj text eol=crlf
+*.props text eol=crlf
+*.targets text eol=crlf
+
+# Mark binary files
+*.dll binary
+*.exe binary
+*.pdb binary
+*.png binary
+*.jpg binary
+*.zip binary
