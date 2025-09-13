@@ -1,0 +1,36 @@
+name: Publish NuGet Package
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore src/SignalR.Backplane.EFCore/SignalR.Backplane.EFCore.csproj
+
+      - name: Build
+        run: dotnet build src/SignalR.Backplane.EFCore/SignalR.Backplane.EFCore.csproj --configuration Release --no-restore
+
+      - name: Run Tests
+        run: dotnet test tests/SignalR.Backplane.EFCore.Tests/SignalR.Backplane.EFCore.Tests.csproj --no-build --verbosity normal
+
+      - name: Pack
+        run: dotnet pack src/SignalR.Backplane.EFCore/SignalR.Backplane.EFCore.csproj -c Release -o out
+
+      - name: Publish to NuGet
+        if: startsWith(github.ref, 'refs/tags/')
+        run: dotnet nuget push out/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}

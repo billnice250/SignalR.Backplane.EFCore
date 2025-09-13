@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<PackageId>SignalR.Backplane.EFCore</PackageId>
+		<Version>1.0.0</Version>
+		<Nullable>enable</Nullable>
+		<Authors>Bill Nice G. Havugukuri</Authors>
+		<Description>EF Core based backplane for ASP.NET Core SignalR with ack-based delivery, subscriber tracking and cleanup policies.</Description>
+		<PackageTags>SignalR;EFCore;Backplane;Messaging;PubSub;Scaling</PackageTags>
+		<RepositoryUrl>https://github.com/billnice250/SignalR.Backplane.EFCore</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.5" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.5" />
+		<None Include="README.md" Pack="true" PackagePath="\"/>
+	</ItemGroup>
+
+</Project>

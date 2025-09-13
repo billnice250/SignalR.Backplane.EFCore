@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  signalr-a:
+    build: ./samples/SignalR.Backplane.EFCore.Sample
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./samples/SignalR.Backplane.EFCore.Sample:/app
+    environment:
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+    command: ["dotnet", "run", "--urls", "http://0.0.0.0:5000"]
+
+  signalr-b:
+    build: ./samples/SignalR.Backplane.EFCore.Sample
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./samples/SignalR.Backplane.EFCore.Sample:/app
+    environment:
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+    command: ["dotnet", "run", "--urls", "http://0.0.0.0:5001"]
