@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+                <title>SignalR NotificationHub Test</title>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+        </head>
+        <body>
+            <h2>SignalR NotificationHub Client</h2>
+            <div id="messages"></div>
+
+            <script>
+                const messagesDiv = document.getElementById("messages");
+
+                const connection = new signalR.HubConnectionBuilder()
+                .withUrl("https://localhost:7275/hubs/notification") // adjust if port differs
+                .withAutomaticReconnect()
+                .build();
+
+        connection.on("ReceiveMessage", msg => {
+                    console.log("Received:", msg);
+                const p = document.createElement("p");
+                p.textContent = msg;
+                messagesDiv.appendChild(p);
+        });
+
+                connection.start()
+            .then(() => {
+                    console.log("✅ Connected to NotificationHub");
+                const p = document.createElement("p");
+                p.textContent = "Connected to hub.";
+                messagesDiv.appendChild(p);
+            })
+            .catch(err => console.error("❌ Connection failed:", err));
+            </script>
+        </body>
+    </html>

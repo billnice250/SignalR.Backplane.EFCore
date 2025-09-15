@@ -18,7 +18,14 @@ public enum CleanupMode
 
 public class EfBackplaneOptions
 {
-    public string SubscriberId { get; set; } = Environment.MachineName;
+    /// <summary>
+    /// Unique identifier for this subscriber.
+    /// If two stores use the same <see cref="StoreSubscriberId"/>, they are treated as
+    /// multiple instances of the same subscriber, and acknowledgements from one
+    /// instance are considered equivalent for all (idempotent).
+    /// </summary>
+    public string StoreSubscriberId { get; set; } = Environment.MachineName;
+
     public TimeSpan PollInterval { get; set; } = TimeSpan.FromSeconds(2);
 
     /// <summary>
@@ -33,7 +40,7 @@ public class EfBackplaneOptions
     public TimeSpan HeartbeatTimeout { get; set; } = TimeSpan.FromSeconds(45);
 
     // Cleanup
-    public CleanupStrategy CleanupStrategy { get; set; } = CleanupStrategy.None;
+    public CleanupStrategy CleanupStrategy { get; set; } = CleanupStrategy.AckOrTtlBased;
     public CleanupMode CleanupMode { get; set; } = CleanupMode.Logical;
     public TimeSpan CleanupInterval { get; set; } = TimeSpan.FromMinutes(5);
     public TimeSpan RetentionTime { get; set; } = TimeSpan.FromDays(7);

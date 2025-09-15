@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using SignalR.Backplane.EFCore.Interfaces;
 using SignalR.Backplane.EFCore.Options;
 using System;
@@ -20,8 +21,9 @@ public static class EfBackplaneExtensions
 
         builder.Services.AddSingleton(options);
         builder.Services.AddDbContextFactory<TContext>(optionsAction);
+        builder.Services.AddSingleton<EfBackplaneCleaner<TContext>>();
+        builder.Services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<EfBackplaneCleaner<TContext>>());
         builder.Services.AddSingleton<IBackplaneStore, EfBackplaneStore<TContext>>();
-        builder.Services.AddHostedService<EfBackplaneCleaner<TContext>>();
         builder.Services.AddSingleton(typeof(HubLifetimeManager<>), typeof(SignalR.BusHubLifetimeManager<>));
 
         return builder;

@@ -1,6 +1,13 @@
 # SignalR.Backplane.EFCore
 
-EF Core–backed backplane for ASP.NET Core SignalR that enables horizontal scale-out across multiple app instances, with ack-based delivery, subscriber tracking, and cleanup policies.
+An **EF Core–backed backplane for ASP.NET Core SignalR**.  
+Enables **horizontal scale-out** across multiple application instances with:
+
+- **Ack-based delivery**  
+- **Subscriber heartbeat tracking**  
+- **Configurable cleanup policies**
+
+---
 
 ## 🚀 Installation
 
@@ -8,112 +15,121 @@ EF Core–backed backplane for ASP.NET Core SignalR that enables horizontal scal
 dotnet add package SignalR.Backplane.EFCore
 ```
 
+---
+
 ## ⚡ Quick Start
 
-### 1. Create a DbContext (or use the default)
-
-```csharp
-public class CustomBackplaneDbContext : DbContext, IBackplaneDbContext
-{
-    public DbSet<BackplaneMessage> Messages => Set<BackplaneMessage>();
-    public DbSet<BackplaneAck> Acks => Set<BackplaneAck>();
-    public DbSet<BackplaneSubscriber> Subscribers => Set<BackplaneSubscriber>();
-
-    public CustomBackplaneDbContext(DbContextOptions<CustomBackplaneDbContext> options) : base(options) { }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        // Store Payload as JSON/JSONB depending on provider
-        var converter = new ValueConverter<BackplaneEnvelope, string>(
-            v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-            v => JsonSerializer.Deserialize<BackplaneEnvelope>(v, (JsonSerializerOptions?)null)!);
-
-        modelBuilder.Entity<BackplaneMessage>(entity =>
-        {
-            entity.Property(e => e.Payload).HasConversion(converter);
-            if (Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
-                entity.Property(e => e.Payload).HasColumnType("jsonb");
-        });
-    }
-}
-```
-
-### 2. Register services in Program.cs
+### 1. Register services in `Program.cs`
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<BackplaneDbContext>(options =>
-    options.UseSqlite("Data Source=backplane.db"));
-
 builder.Services.AddSignalR()
-    .AddBackplaneDbContext<BackplaneDbContext>(
-        options => options.UseSqlite("Data Source=backplane.db"),
+    .AddBackplaneDbContext<EfBackplaneDbContext>(
+        options => options.UseSqlite(builder.Configuration.GetConnectionString("Main")),
         configure =>
         {
-            configure.SubscriberId = $"{Environment.MachineName}-{Guid.NewGuid()}";
+            configure.StoreSubscriberId = $"{Environment.MachineName}-{Guid.NewGuid()}";
             configure.AutoCreate = true;
         });
 
+builder.Services.AddOpenApi();
+
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseHttpsRedirection();
+
 app.MapHub<NotificationHub>("/hubs/notification");
+
+app.MapGet("/randomMessage", async (IHubContext<NotificationHub> hubContext) =>
+{
+    var msg = $"Random-{Guid.NewGuid():N}";
+    await hubContext.Clients.All.SendAsync("signalr", msg);
+    return Results.Ok(new { Sent = msg });
+});
 
 app.Run();
 ```
 
-Run multiple instances of your app pointing at the same database to scale out SignalR across nodes. Each instance should use a unique `SubscriberId`.
+👉 Run multiple instances of your app pointing at the **same database** to scale SignalR out across nodes.  
+Each instance must use a unique `SubscriberId`.
+
+---
 
 ## 🧭 Scale-Out Notes
 
-- Use any EF Core provider as the shared store (Postgres, SQL Server, SQLite for dev/test).
-- Ensure each app instance sets a unique `SubscriberId` (e.g., hostname + GUID).
-- `AutoCreate = true` simplifies first run; in production, prefer running migrations once during deployment.
-- Works in containers, Kubernetes, Azure App Service, or VMs—no Redis required.
+- Use any EF Core provider as the shared store (Postgres, SQL Server, SQLite for dev/test).  
+- Ensure each app instance sets a **unique** `StoreSubscriberId` (e.g., `hostname + GUID`).  
+- If two stores use the same `StoreSubscriberId`, they are treated as **instances of the same subscriber** — acknowledgements from one apply to all (idempotent).  
+- `AutoCreate = true` simplifies the first run, but in production run migrations explicitly.  
+- Works seamlessly in **containers, Kubernetes, Azure App Service, or VMs** — no Redis required.
 
-### Docker Compose example (two instances)
+---
 
-```yaml
-version: "3.9"
-services:
-  signalr-a:
-    build: ./samples/SignalR.Backplane.EFCore.Sample
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./samples/SignalR.Backplane.EFCore.Sample:/app
-    environment:
-      - DOTNET_USE_POLLING_FILE_WATCHER=1
-    command: ["dotnet", "run", "--urls", "http://0.0.0.0:5000"]
+### ▶️ Running two instances locally (Kestrel)
 
-  signalr-b:
-    build: ./samples/SignalR.Backplane.EFCore.Sample
-    ports:
-      - "5001:5001"
-    volumes:
-      - ./samples/SignalR.Backplane.EFCore.Sample:/app
-    environment:
-      - DOTNET_USE_POLLING_FILE_WATCHER=1
-    command: ["dotnet", "run", "--urls", "http://0.0.0.0:5001"]
+Both servers share the same SQLite file for testing:
+
+```bash
+# Terminal 1
+dotnet run --urls "https://localhost:5001"
+
+# Terminal 2
+dotnet run --urls "https://localhost:5002"
 ```
 
-Both instances share the same SQLite file via the bind-mounted sample folder, suitable for local testing. For production, use Postgres or SQL Server as the shared store.
+For production, use Postgres or SQL Server as the shared store.
+
+---
+
+### ▶️ Connect a .NET client
+
+```csharp
+using Microsoft.AspNetCore.SignalR.Client;
+
+var connection = new HubConnectionBuilder()
+    .WithUrl("https://localhost:5002/hubs/notification") // match your server URL
+    .WithAutomaticReconnect()
+    .Build();
+
+connection.On<string>("signalr", msg =>
+{
+    Console.WriteLine($"[NotificationHub] Received: {msg}");
+});
+
+await connection.StartAsync();
+Console.WriteLine($"State: {connection.State}"); // should be Connected
+
+Console.WriteLine("Connected to SignalR NotificationHub.");
+Console.ReadKey();
+
+await connection.DisposeAsync();
+```
+
+✅ You’ll see the message arrive regardless of which instance you send it to.
+
+---
 
 ## ✨ Features
 
-- ✅ **Horizontal scalability**: scale SignalR across multiple app instances via a shared database  
-- ✅ **EF Core backplane** (Postgres, SQL Server, SQLite supported)  
-- ✅ **Ack-based message delivery** (ensures subscribers mark messages delivered)  
-- ✅ **Subscriber heartbeat tracking**  
-- ✅ **Configurable cleanup** (TTL, logical or physical deletion)  
-- ✅ **Multiple hubs supported** (open generic `BusHubLifetimeManager<THub>`)  
+- **Horizontal scalability** — run multiple SignalR instances against a shared DB  
+- **EF Core backplane** — supports Postgres, SQL Server, and SQLite  
+- **Ack-based message delivery** — ensures subscribers confirm receipt  
+- **Subscriber heartbeat tracking**  
+- **Configurable cleanup** — TTL, logical delete, or physical delete  
+- **Multiple hub support** — via generic `BusHubLifetimeManager<THub>`  
 
 ---
 
 ## 📖 Links
 
-- [NuGet Package](https://www.nuget.org/packages/SignalR.Backplane.EFCore)
-- [GitHub Repository](https://github.com/billnice250/SignalR.Backplane.EFCore)
+- [NuGet Package](https://www.nuget.org/packages/SignalR.Backplane.EFCore)  
+- [GitHub Repository](https://github.com/billnice250/SignalR.Backplane.EFCore)  
 
 ---
 

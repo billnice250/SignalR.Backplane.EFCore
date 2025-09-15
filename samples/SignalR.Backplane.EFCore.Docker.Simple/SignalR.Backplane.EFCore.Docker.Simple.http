@@ -1,0 +1,6 @@
+@SignalR.Backplane.EFCore.Docker.Simple_HostAddress = http://localhost:5298
+
+GET {{SignalR.Backplane.EFCore.Docker.Simple_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalR.Backplane.EFCore.Validation.Tests", "SignalR.Backplane.EFCore.Validation.Tests.csproj", "{D1680456-B1E6-39BD-307F-7EC7EC611EDD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalR.Backplane.EFCore", "..\..\src\SignalR.Backplane.EFCore\SignalR.Backplane.EFCore.csproj", "{43E353B0-7563-1937-58E7-4D31BBA68EB6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D1680456-B1E6-39BD-307F-7EC7EC611EDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1680456-B1E6-39BD-307F-7EC7EC611EDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1680456-B1E6-39BD-307F-7EC7EC611EDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1680456-B1E6-39BD-307F-7EC7EC611EDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43E353B0-7563-1937-58E7-4D31BBA68EB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43E353B0-7563-1937-58E7-4D31BBA68EB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43E353B0-7563-1937-58E7-4D31BBA68EB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43E353B0-7563-1937-58E7-4D31BBA68EB6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BCBF586A-4FBD-4940-B5DF-48BC3E3C3E5A}
+	EndGlobalSection
+EndGlobal

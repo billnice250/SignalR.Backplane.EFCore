@@ -14,7 +14,6 @@ namespace SignalR.Backplane.EFCore.SignalR;
 public class BusHubLifetimeManager<THub> : HubLifetimeManager<THub> where THub : Hub
 {
     private const string ChannelName = "signalr";
-    private const string SubscriberId = "HubLifetimeManager";
     private readonly IBackplaneStore _bus;
     private readonly ConcurrentDictionary<string, HubConnectionContext> _connections = new();
     private readonly ConcurrentDictionary<string, HashSet<string>> _groups = new();
@@ -29,7 +28,7 @@ public class BusHubLifetimeManager<THub> : HubLifetimeManager<THub> where THub :
             await foreach (var (payload, id) in _bus.SubscribeAsync(ChannelName))
             {
                 await Dispatch(payload);
-                await _bus.AckAsync(id, SubscriberId);
+                await _bus.AckForCurrentStoreAsync(id);
             }
         });
     }
